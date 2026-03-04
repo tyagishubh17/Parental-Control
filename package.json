@@ -1,0 +1,83 @@
+{
+  "name": "parental-control-dashboard",
+  "version": "1.0.0",
+  "description": "Parental Control & Monitoring Dashboard",
+  "main": "main.js",
+  "author": "SykikXO",
+  "license": "MIT",
+  "scripts": {
+    "start": "powershell -Command \"Start-Process node -ArgumentList 'node_modules/electron/cli.js', '.' -Verb RunAs\"",
+    "dev": "electron . --dev",
+    "pack": "electron-builder --dir",
+    "build": "electron-builder --win",
+    "build:nsis": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.sykikxo.parentalcontrol",
+    "productName": "Parental Control Dashboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js"
+    ],
+    "extraResources": [
+      {
+        "from": "server.py",
+        "to": "backend/server.py"
+      },
+      {
+        "from": "database.py",
+        "to": "backend/database.py"
+      },
+      {
+        "from": "frontend",
+        "to": "backend/frontend"
+      },
+      {
+        "from": ".venv",
+        "to": "python"
+      },
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.png",
+      "uninstallerIcon": "assets/icon.png",
+      "installerHeaderIcon": "assets/icon.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Parental Control"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Utility"
+    }
+  }
+}

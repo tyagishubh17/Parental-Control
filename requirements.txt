@@ -1,0 +1,7 @@
+Flask==3.0.3
+Flask-CORS==5.0.0
+cryptography>=42.0.0
+pynput>=1.7.6
+pyautogui>=0.9.54
+Pillow>=10.0.0
+pyscreeze>=0.1.28

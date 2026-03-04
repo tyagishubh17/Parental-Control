@@ -1,0 +1,41 @@
+# Runtime data
+blocked_sites.txt
+key_log.txt
+server.pid
+parental_control.db.enc
+.db_salt
+screenshots/
+app_usage_log.txt
+alerts.txt
+tmp_chrome_history
+tmp_monitor
+cookies.txt
+electron_debug.txt
+module_trace.txt
+runtime_server_log.txt
+server_log.txt
+import_test_ss.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Node / Electron
+node_modules/
+dist/
+python/
+python-embed.zip
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archives / non-source
+*.7z
+*.pptx

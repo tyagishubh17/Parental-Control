@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Parental Control Dashboard</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <div class="login-icon">🔒</div>
+            <h2>Parental Control</h2>
+            <p>Enter administrator password to access the dashboard.</p>
+            <div class="login-form">
+                <input type="password" id="login-password" placeholder="Password"
+                    onkeypress="if(event.key==='Enter')doLogin()" autofocus />
+                <button class="btn btn-primary" onclick="doLogin()" style="width:100%">🔓 Unlock Dashboard</button>
+            </div>
+            <p class="login-error" id="login-error"></p>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav id="main-nav" style="display:none">
+        <h2>Parental Control and Monitoring </h2>
+        <ul>
+            <li><a href="#" onclick="showSection('home')">Home</a></li>
+            <li><a href="#" onclick="showSection('features')">Features</a></li>
+            <li><a href="#" onclick="showSection('dashboard')">Dashboard</a></li>
+            <li><a href="#" onclick="showSection('reports')">Reports</a></li>
+            <li><a href="#" onclick="doLogout()" class="logout-link">🚪 Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- HOME SECTION -->
+    <div id="section-home">
+        <!-- HERO -->
+        <section class="hero">
+            <div class="hero-text">
+                <h1>Advanced Parental Monitoring System</h1>
+                <p>Securely monitor activity, block threats, and analyze digital behavior with intelligent cyber
+                    protection tools keeping your child safe from threats on the Internet </p>
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="showSection('dashboard')">Access Dashboard</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FEATURES -->
+        <section class="features" id="section-features-cards">
+            <h2>Core Monitoring Features</h2>
+            <div class="grid">
+
+                <div class="card" onclick="showSection('dashboard'); openTab('sites')">
+                    <h3>🌐 Website Blocker</h3>
+                    <p>Restrict access to unsafe or inappropriate sites.</p>
+                </div>
+
+                <div class="card" onclick="showSection('dashboard'); openTab('keylogger')">
+                    <h3>⌨️ Keylogger</h3>
+                    <p>Secure keystroke tracking for activity monitoring.</p>
+                </div>
+
+                <div class="card" onclick="showSection('dashboard'); openTab('apps')">
+                    <h3>🚫 App Blocker</h3>
+                    <p>Control and limit application usage.</p>
+                </div>
+
+                <div class="card" onclick="showSection('dashboard'); openTab('screenshots')">
+                    <h3>📸 Screenshots</h3>
+                    <p>Capture screen activity at secure intervals.</p>
+                </div>
+
+                <div class="card" onclick="showSection('dashboard'); openTab('metrics')">
+                    <h3>📊 Analytics & Metrics</h3>
+                    <p>Track time, frequency, and usage patterns.</p>
+                </div>
+
+                <div class="card" onclick="showSection('dashboard'); openTab('alerts')">
+                    <h3>🔔 Alerts & Risk Detection</h3>
+                    <p>Real-time alerts and keyword risk scanning.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- PREVIEW -->
+        <section class="preview">
+            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71" alt="Analytics Dashboard">
+            <div class="preview-text">
+                <h2>Real-Time Analytics Dashboard</h2>
+                <ul>
+                    <li>✔ Live activity monitoring</li>
+                    <li>✔ AES-256 encrypted database</li>
+                    <li>✔ Keylogger risk detection</li>
+                    <li>✔ Time tracking & metrics</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DASHBOARD SECTION (hidden by default) -->
+    <!-- ============================================================ -->
+    <div id="section-dashboard" style="display:none;">
+
+        <section class="dashboard-area">
+            <h2 class="dash-title">Control Panel</h2>
+
+            <!-- Status Bar -->
+            <div class="status-bar" id="status-bar">
+                <div class="status-chip" id="status-sites">Sites Blocked: <span>0</span></div>
+                <div class="status-chip" id="status-keylogger">Keylogger: <span>OFF</span></div>
+                <div class="status-chip" id="status-blocker">App Blocker: <span>OFF</span></div>
+                <div class="status-chip" id="status-screenshots">Screenshots: <span>0</span></div>
+                <div class="status-chip status-chip-alert" id="status-alerts" onclick="openTab('alerts')">🔔 Alerts:
+                    <span>0</span>
+                </div>
+                <div class="status-chip" id="status-focus">Focus: <span>OFF</span></div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="sites" onclick="openTab('sites')">🌐 Sites</button>
+                <button class="tab-btn" data-tab="keylogger" onclick="openTab('keylogger')">⌨️ Keylogger</button>
+                <button class="tab-btn" data-tab="apps" onclick="openTab('apps')">🚫 Apps</button>
+                <button class="tab-btn" data-tab="alerts" onclick="openTab('alerts')">🔔 Alerts</button>
+                <button class="tab-btn" data-tab="metrics" onclick="openTab('metrics')">📊 Metrics</button>
+                <button class="tab-btn" data-tab="history" onclick="openTab('history')">🕐 History</button>
+                <button class="tab-btn" data-tab="screenshots" onclick="openTab('screenshots')">📸 Captures</button>
+            </div>
+
+            <!-- TAB CONTENT: SITES -->
+            <div class="tab-content active" id="tab-sites">
+                <div class="panel">
+                    <h3>Website Blocker</h3>
+                    <div class="input-row">
+                        <input type="text" id="site-input" placeholder="e.g. facebook.com" />
+                        <button class="btn btn-primary btn-sm" onclick="addSite()">+ Add</button>
+                    </div>
+                    <ul class="item-list" id="site-list"></ul>
+                    <p class="hint">⚠️ Blocks are applied automatically. Server must run as Administrator.</p>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: KEYLOGGER -->
+            <div class="tab-content" id="tab-keylogger">
+                <div class="panel">
+                    <h3>Keylogger + Risk Detection</h3>
+                    <div class="action-row">
+                        <button class="btn btn-primary btn-sm" id="keylogger-toggle" onclick="toggleKeylogger()">▶ Start
+                            Keylogger</button>
+                        <button class="btn btn-outline btn-sm" onclick="refreshKeylog()">🔄 Refresh Logs</button>
+                    </div>
+                    <pre class="log-output" id="keylog-output">No logs yet.</pre>
+
+                    <h4 style="margin-top:1.5rem; color:var(--primary);">Risk Keywords</h4>
+                    <p class="hint">Keywords are scanned automatically every 10 seconds while keylogger is active.</p>
+                    <div class="input-row">
+                        <input type="text" id="keyword-input" placeholder="Add risk keyword..." />
+                        <select id="keyword-severity">
+                            <option value="low">🟢 Low</option>
+                            <option value="medium" selected>🟡 Medium</option>
+                            <option value="high">🔴 High</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="addKeyword()">+ Add</button>
+                    </div>
+                    <ul class="item-list" id="keyword-list"></ul>
+
+                    <h4 style="margin-top:1.5rem; color:#ff4444;">Risk Detections</h4>
+                    <div id="risk-detections"></div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: APPS -->
+            <div class="tab-content" id="tab-apps">
+                <div class="panel">
+                    <h3>App Blocker (Focus Mode)</h3>
+                    <div class="input-row">
+                        <input type="text" id="app-input" placeholder="e.g. discord" />
+                        <button class="btn btn-primary btn-sm" onclick="addApp()">+ Add</button>
+                    </div>
+                    <ul class="item-list" id="app-list"></ul>
+                    <div class="action-row">
+                        <button class="btn btn-primary btn-sm" id="blocker-toggle" onclick="toggleAppBlocker()">▶ Start
+                            Blocker</button>
+                    </div>
+                    <p class="hint">Blocker will terminate matching processes every 15 seconds. Violations generate
+                        alerts.</p>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: ALERTS -->
+            <div class="tab-content" id="tab-alerts">
+                <div class="panel">
+                    <h3>🔔 Real-Time Alert Log</h3>
+                    <div class="action-row">
+                        <button class="btn btn-primary btn-sm" onclick="loadAlerts()">🔄 Refresh</button>
+                        <button class="btn btn-outline btn-sm" onclick="markAlertsRead()">✓ Mark All Read</button>
+                        <button class="btn btn-danger btn-sm" onclick="clearAlerts()">🗑 Clear All</button>
+                        <select id="alert-filter" onchange="loadAlerts()">
+                            <option value="">All Types</option>
+                            <option value="focus_violation">Focus Violations</option>
+                            <option value="risk_keyword">Risk Detections</option>
+                            <option value="site_block">Site Blocks</option>
+                            <option value="system">System</option>
+                        </select>
+                    </div>
+                    <div class="alert-feed" id="alert-feed">
+                        <p class="hint">No alerts yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: METRICS -->
+            <div class="tab-content" id="tab-metrics">
+                <div class="panel">
+                    <h3>📊 Analytics & Metrics</h3>
+                    <div class="action-row">
+                        <button class="btn btn-primary btn-sm" id="tracker-toggle" onclick="toggleTimeTracker()">▶ Start
+                            Time Tracker</button>
+                        <button class="btn btn-outline btn-sm" onclick="loadMetrics()">🔄 Refresh</button>
+                        <select id="metrics-period" onchange="loadMetrics()">
+                            <option value="1">Today</option>
+                            <option value="7" selected>Past 7 Days</option>
+                            <option value="30">Past 30 Days</option>
+                        </select>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h4>⏱ Total Screen Time</h4>
+                            <div class="metric-value" id="total-screen-time">0h 0m</div>
+                        </div>
+                        <div class="metric-card">
+                            <h4>🌐 Sites Tracked</h4>
+                            <div class="metric-value" id="sites-tracked">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <h4>📱 Apps Tracked</h4>
+                            <div class="metric-value" id="apps-tracked">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <h4>⚠️ Risk Events</h4>
+                            <div class="metric-value" id="risk-count">0</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top:1.5rem; color:var(--primary);">Website Frequency</h4>
+                    <div id="site-frequency-chart" class="chart-container"></div>
+
+                    <h4 style="margin-top:1.5rem; color:var(--primary);">Time Spent per Site</h4>
+                    <div id="site-time-chart" class="chart-container"></div>
+
+                    <h4 style="margin-top:1.5rem; color:var(--primary);">Application Usage</h4>
+                    <div id="app-usage-chart" class="chart-container"></div>
+
+                    <h4 style="margin-top:1.5rem; color:var(--primary);">Recent Visits</h4>
+                    <div id="recent-visits" class="history-grid"></div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: HISTORY -->
+            <div class="tab-content" id="tab-history">
+                <div class="panel">
+                    <h3>Browser History (Past 7 Days)</h3>
+                    <button class="btn btn-primary btn-sm" onclick="loadHistory()">📊 Analyze History</button>
+                    <div id="history-results" class="history-grid"></div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: SCREENSHOTS -->
+            <div class="tab-content" id="tab-screenshots">
+                <div class="panel">
+                    <h3>Screenshot Capture</h3>
+                    <button class="btn btn-primary btn-sm" onclick="captureScreenshot()">📸 Take Screenshot</button>
+                    <button class="btn btn-outline btn-sm" onclick="loadScreenshots()">🔄 Refresh</button>
+                    <div id="screenshot-gallery" class="screenshot-grid"></div>
+                </div>
+            </div>
+
+        </section>
+    </div>
+
+    <!-- REPORTS SECTION (hidden by default) -->
+    <div id="section-reports" style="display:none;">
+        <section class="dashboard-area">
+            <h2 class="dash-title">Reports & Logs</h2>
+            <div class="panel">
+                <h3>System Status</h3>
+                <div class="report-content" id="report-content">
+                    <p>Click below to generate a full status report.</p>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="generateReport()">📋 Generate Report</button>
+            </div>
+        </section>
+    </div>
+
+
+    <!-- FOOTER -->
+    <footer>
+        © 2026 Parental Control Project | made with ❤️ by group 54
+    </footer>
+
+    <!-- ============================================================ -->
+    <!-- JAVASCRIPT -->
+    <!-- ============================================================ -->
+    <script>
+        const API = '';
+        let authToken = null;
+
+        // --- Auth-aware fetch wrapper ---
+        async function authFetch(url, options = {}) {
+            options.credentials = 'same-origin';
+            const res = await fetch(url, options);
+            if (res.status === 401) {
+                showLoginScreen();
+                throw new Error('auth_required');
+            }
+            return res;
+        }
+
+        // --- Login / Logout ---
+        function showLoginScreen() {
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('main-nav').style.display = 'none';
+            document.getElementById('section-home').style.display = 'none';
+            document.getElementById('section-dashboard').style.display = 'none';
+            document.getElementById('section-reports').style.display = 'none';
+            document.querySelector('footer').style.display = 'none';
+        }
+
+        function hideLoginScreen() {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-nav').style.display = 'flex';
+            document.getElementById('section-home').style.display = 'block';
+            document.querySelector('footer').style.display = 'block';
+        }
+
+        async function doLogin() {
+            const pw = document.getElementById('login-password').value;
+            const errEl = document.getElementById('login-error');
+            if (!pw) { errEl.textContent = 'Please enter a password.'; return; }
+            try {
+                const res = await fetch(API + '/api/auth/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pw }), credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    authToken = data.token;
+                    errEl.textContent = '';
+                    document.getElementById('login-password').value = '';
+                    hideLoginScreen();
+                    showToast('🔓 Dashboard unlocked');
+                } else {
+                    errEl.textContent = '❌ ' + (data.error || 'Invalid password');
+                    document.getElementById('login-password').value = '';
+                    document.getElementById('login-password').focus();
+                }
+            } catch (e) {
+                errEl.textContent = '❌ Connection failed';
+            }
+        }
+
+        async function doLogout() {
+            try {
+                await fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+            } catch (e) { }
+            authToken = null;
+            showLoginScreen();
+            showToast('🔒 Logged out');
+        }
+
+        async function checkAuth() {
+            try {
+                const res = await fetch(API + '/api/auth/check', { credentials: 'same-origin' });
+                const data = await res.json();
+                if (data.authenticated) {
+                    hideLoginScreen();
+                } else {
+                    showLoginScreen();
+                }
+            } catch (e) {
+                showLoginScreen();
+            }
+        }
+
+        // --- Utility ---
+        function formatDuration(seconds) {
+            if (!seconds || seconds <= 0) return '0s';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) return `${h}h ${m}m`;
+            if (m > 0) return `${m}m ${s}s`;
+            return `${s}s`;
+        }
+
+        function severityBadge(severity) {
+            const colors = { low: '#22c55e', medium: '#eab308', high: '#ef4444' };
+            const icons = { low: '🟢', medium: '🟡', high: '🔴' };
+            return `<span class="severity-badge" style="color:${colors[severity] || '#888'}">${icons[severity] || '⚪'} ${severity}</span>`;
+        }
+
+        function timeAgo(isoString) {
+            const diff = Date.now() - new Date(isoString).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'Just now';
+            if (mins < 60) return `${mins}m ago`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `${hrs}h ago`;
+            return `${Math.floor(hrs / 24)}d ago`;
+        }
+
+        // --- Section Navigation ---
+        function showSection(name) {
+            document.getElementById('section-home').style.display = name === 'home' ? 'block' : 'none';
+            document.getElementById('section-dashboard').style.display = name === 'dashboard' ? 'block' : 'none';
+            document.getElementById('section-reports').style.display = name === 'reports' ? 'block' : 'none';
+
+            if (name === 'features') {
+                document.getElementById('section-home').style.display = 'block';
+                document.getElementById('section-features-cards').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            if (name === 'dashboard') {
+                refreshStatus();
+                loadSites();
+                loadApps();
+            }
+            if (name === 'reports') generateReport();
+        }
+
+        // --- Tab System ---
+        function openTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+
+            // Auto-load data for specific tabs
+            if (tabName === 'alerts') loadAlerts();
+            if (tabName === 'metrics') loadMetrics();
+            if (tabName === 'keylogger') { loadKeywords(); loadRiskDetections(); }
+        }
+
+        // --- Status Refresh ---
+        async function refreshStatus() {
+            try {
+                const res = await authFetch('/api/status');
+                const data = await res.json();
+                document.querySelector('#status-sites span').textContent = data.blocked_sites_count;
+                document.querySelector('#status-keylogger span').textContent = data.keylogger_active ? 'ON' : 'OFF';
+                document.querySelector('#status-blocker span').textContent = data.app_blocker_active ? 'ON' : 'OFF';
+                document.querySelector('#status-screenshots span').textContent = data.screenshot_count;
+                document.querySelector('#status-alerts span').textContent = data.unread_alerts;
+                document.querySelector('#status-focus span').textContent = data.focus_time_active ? 'ACTIVE' : 'OFF';
+
+                // Highlight unread alerts
+                const alertChip = document.getElementById('status-alerts');
+                if (data.unread_alerts > 0) {
+                    alertChip.classList.add('has-alerts');
+                } else {
+                    alertChip.classList.remove('has-alerts');
+                }
+
+                // Update button states
+                const klBtn = document.getElementById('keylogger-toggle');
+                if (data.keylogger_active) {
+                    klBtn.textContent = '⏹ Stop Keylogger';
+                    klBtn.classList.add('btn-danger');
+                } else {
+                    klBtn.textContent = '▶ Start Keylogger';
+                    klBtn.classList.remove('btn-danger');
+                }
+                const abBtn = document.getElementById('blocker-toggle');
+                if (data.app_blocker_active) {
+                    abBtn.textContent = '⏹ Stop Blocker';
+                    abBtn.classList.add('btn-danger');
+                } else {
+                    abBtn.textContent = '▶ Start Blocker';
+                    abBtn.classList.remove('btn-danger');
+                }
+                const ttBtn = document.getElementById('tracker-toggle');
+                if (data.time_tracker_active) {
+                    ttBtn.textContent = '⏹ Stop Tracker';
+                    ttBtn.classList.add('btn-danger');
+                } else {
+                    ttBtn.textContent = '▶ Start Time Tracker';
+                    ttBtn.classList.remove('btn-danger');
+                }
+            } catch (e) {
+                console.error('Status fetch failed:', e);
+            }
+        }
+
+        // --- Blocked Sites ---
+        async function loadSites() {
+            const res = await authFetch('/api/blocked-sites');
+            const data = await res.json();
+            const list = document.getElementById('site-list');
+            list.innerHTML = '';
+            data.sites.forEach(siteObj => {
+                const li = document.createElement('li');
+                const lockIcon = siteObj.active ? '🔒' : '🔓';
+                const opacity = siteObj.active ? '1' : '0.5';
+                li.innerHTML = `<span style="opacity: ${opacity};">${siteObj.site}</span>
+                <div style="display: flex; gap: 5px;">
+                  <button class="btn-icon" onclick="toggleSite('${siteObj.site}')" title="Toggle Block">${lockIcon}</button>
+                  <button class="btn-icon" onclick="removeSite('${siteObj.site}')" title="Remove Site">✕</button>
+                </div>`;
+                list.appendChild(li);
+            });
+        }
+
+        async function addSite() {
+            const input = document.getElementById('site-input');
+            const site = input.value.trim();
+            if (!site) return;
+            await authFetch('/api/blocked-sites', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ site })
+            });
+            input.value = '';
+            loadSites();
+            refreshStatus();
+        }
+
+        async function removeSite(site) {
+            await authFetch('/api/blocked-sites', {
+                method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ site })
+            });
+            loadSites();
+            refreshStatus();
+        }
+
+        async function applySiteBlocks() {
+            const res = await authFetch('/api/blocked-sites/apply', { method: 'POST' });
+            const data = await res.json();
+            showToast(data.success ? '🔒 ' + data.message : '❌ ' + data.message);
+        }
+
+        async function toggleSite(site) {
+            const res = await authFetch('/api/blocked-sites/toggle', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ site })
+            });
+            const data = await res.json();
+            showToast(data.message);
+            loadSites();
+            refreshStatus();
+        }
+
+        // --- Keylogger ---
+        async function toggleKeylogger() {
+            const res = await authFetch('/api/status');
+            const status = await res.json();
+            if (status.keylogger_active) {
+                await authFetch('/api/keylogger/stop', { method: 'POST' });
+                showToast('⌨️ Keylogger stopped');
+            } else {
+                await authFetch('/api/keylogger/start', { method: 'POST' });
+                showToast('⌨️ Keylogger started (risk scanner auto-enabled)');
+            }
+            refreshStatus();
+        }
+
+        async function refreshKeylog() {
+            const res = await authFetch('/api/keylogger/logs');
+            const data = await res.json();
+            document.getElementById('keylog-output').textContent = data.logs || 'No logs yet.';
+        }
+
+        // --- Risk Keywords ---
+        async function loadKeywords() {
+            const res = await authFetch('/api/risk-keywords');
+            const data = await res.json();
+            const list = document.getElementById('keyword-list');
+            list.innerHTML = '';
+            data.keywords.forEach(kw => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${severityBadge(kw.severity)} ${kw.keyword} <small style="opacity:0.5">(${kw.category})</small></span>
+            <button class="btn-icon" onclick="removeKeyword('${kw.keyword}')">✕</button>`;
+                list.appendChild(li);
+            });
+        }
+
+        async function addKeyword() {
+            const input = document.getElementById('keyword-input');
+            const severity = document.getElementById('keyword-severity').value;
+            const keyword = input.value.trim();
+            if (!keyword) return;
+            await authFetch('/api/risk-keywords', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyword, severity })
+            });
+            input.value = '';
+            loadKeywords();
+            showToast('✅ Keyword added');
+        }
+
+        async function removeKeyword(keyword) {
+            await authFetch('/api/risk-keywords', {
+                method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyword })
+            });
+            loadKeywords();
+        }
+
+        async function loadRiskDetections() {
+            const res = await authFetch('/api/risk-detections');
+            const data = await res.json();
+            const container = document.getElementById('risk-detections');
+            if (!data.detections || data.detections.length === 0) {
+                container.innerHTML = '<p class="hint">No risk detections yet.</p>';
+                return;
+            }
+            container.innerHTML = data.detections.map(d => `
+        <div class="alert-item alert-${d.severity}">
+            <div class="alert-meta">${severityBadge(d.severity)} <span class="alert-time">${timeAgo(d.timestamp)}</span></div>
+            <div class="alert-msg">Keyword "<strong>${d.keyword}</strong>" found: <code>${d.context}</code></div>
+        </div>
+    `).join('');
+        }
+
+        // --- App Blocker ---
+        async function loadApps() {
+            const res = await authFetch('/api/app-blocker/apps');
+            const data = await res.json();
+            const list = document.getElementById('app-list');
+            list.innerHTML = '';
+            data.apps.forEach(app => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${app}</span><button class="btn-icon" onclick="removeApp('${app}')">✕</button>`;
+                list.appendChild(li);
+            });
+        }
+
+        async function addApp() {
+            const input = document.getElementById('app-input');
+            const app = input.value.trim();
+            if (!app) return;
+            await authFetch('/api/app-blocker/apps', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ app })
+            });
+            input.value = '';
+            loadApps();
+        }
+
+        async function removeApp(app) {
+            await authFetch('/api/app-blocker/apps', {
+                method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ app })
+            });
+            loadApps();
+        }
+
+        async function toggleAppBlocker() {
+            const res = await authFetch('/api/status');
+            const status = await res.json();
+            if (status.app_blocker_active) {
+                await authFetch('/api/app-blocker/stop', { method: 'POST' });
+                showToast('🚫 App blocker stopped');
+            } else {
+                await authFetch('/api/app-blocker/start', { method: 'POST' });
+                showToast('🚫 App blocker started');
+            }
+            refreshStatus();
+        }
+
+        // --- Alerts ---
+        async function loadAlerts() {
+            const filter = document.getElementById('alert-filter')?.value || '';
+            const url = filter ? `/api/alerts?type=${filter}` : '/api/alerts';
+            const res = await authFetch(url);
+            const data = await res.json();
+            const feed = document.getElementById('alert-feed');
+
+            if (!data.alerts || data.alerts.length === 0) {
+                feed.innerHTML = '<p class="hint">No alerts to display.</p>';
+                return;
+            }
+
+            feed.innerHTML = data.alerts.map(a => `
+        <div class="alert-item alert-${a.severity} ${a.read ? '' : 'alert-unread'}">
+            <div class="alert-meta">
+                ${severityBadge(a.severity)}
+                <span class="alert-type-badge">${a.type.replace('_', ' ')}</span>
+                <span class="alert-time">${timeAgo(a.timestamp)}</span>
+            </div>
+            <div class="alert-msg">${a.message}</div>
+        </div>
+    `).join('');
+        }
+
+        async function markAlertsRead() {
+            await authFetch('/api/alerts/read', { method: 'POST' });
+            loadAlerts();
+            refreshStatus();
+            showToast('✓ Alerts marked as read');
+        }
+
+        async function clearAlerts() {
+            await authFetch('/api/alerts', { method: 'DELETE' });
+            loadAlerts();
+            refreshStatus();
+            showToast('🗑 Alerts cleared');
+        }
+
+        // --- Time Tracker ---
+        async function toggleTimeTracker() {
+            const res = await authFetch('/api/status');
+            const status = await res.json();
+            if (status.time_tracker_active) {
+                await authFetch('/api/time-tracking/stop', { method: 'POST' });
+                showToast('⏱ Time tracker stopped');
+            } else {
+                await authFetch('/api/time-tracking/start', { method: 'POST' });
+                showToast('⏱ Time tracker started');
+            }
+            refreshStatus();
+        }
+
+        // --- Metrics ---
+        async function loadMetrics() {
+            const days = document.getElementById('metrics-period')?.value || 7;
+            try {
+                const res = await authFetch(`/api/metrics?days=${days}`);
+                const data = await res.json();
+
+                // Total screen time
+                document.getElementById('total-screen-time').textContent = formatDuration(data.total_screen_time);
+                document.getElementById('sites-tracked').textContent = data.site_visits?.length || 0;
+                document.getElementById('apps-tracked').textContent = data.app_usage?.length || 0;
+                document.getElementById('risk-count').textContent = data.risk_events?.length || 0;
+
+                // Site frequency chart
+                renderBarChart('site-frequency-chart', (data.site_visits || []).map(s => ({
+                    label: s.domain, value: s.visits, suffix: ' visits'
+                })), 'No site visit data yet. Enable time tracker or analyze history.');
+
+                // Site time chart
+                renderBarChart('site-time-chart', (data.site_visits || []).filter(s => s.total_time > 0).map(s => ({
+                    label: s.domain, value: s.total_time, display: formatDuration(s.total_time)
+                })), 'No time data available yet.');
+
+                // App usage chart
+                renderBarChart('app-usage-chart', (data.app_usage || []).map(a => ({
+                    label: a.app_name, value: a.total_time, display: formatDuration(a.total_time),
+                    extra: `${a.sessions} sessions`
+                })), 'No app usage data yet. Start the time tracker.');
+
+                // Recent visits
+                const rv = document.getElementById('recent-visits');
+                if (data.recent_visits && data.recent_visits.length > 0) {
+                    let html = '<table><thead><tr><th>Site</th><th>Time</th><th>Duration</th></tr></thead><tbody>';
+                    data.recent_visits.forEach(v => {
+                        html += `<tr>
+                    <td>${v.domain}</td>
+                    <td>${v.visit_time}</td>
+                    <td>${formatDuration(v.duration_seconds)}</td>
+                </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    rv.innerHTML = html;
+                } else {
+                    rv.innerHTML = '<p class="hint">No recent visits recorded. Analyze browser history to populate.</p>';
+                }
+
+            } catch (e) {
+                console.error('Metrics load failed:', e);
+            }
+        }
+
+        function renderBarChart(containerId, items, emptyMsg) {
+            const container = document.getElementById(containerId);
+            if (!items || items.length === 0) {
+                container.innerHTML = `<p class="hint">${emptyMsg}</p>`;
+                return;
+            }
+            const maxVal = Math.max(...items.map(i => i.value));
+            container.innerHTML = items.slice(0, 10).map(item => {
+                const pct = maxVal > 0 ? Math.round((item.value / maxVal) * 100) : 0;
+                const displayVal = item.display || `${item.value}${item.suffix || ''}`;
+                return `<div class="chart-bar-row">
+            <div class="chart-label">${item.label}</div>
+            <div class="chart-bar-wrap">
+                <div class="chart-bar" style="width:${pct}%"></div>
+            </div>
+            <div class="chart-value">${displayVal}${item.extra ? ` <small>(${item.extra})</small>` : ''}</div>
+        </div>`;
+            }).join('');
+        }
+
+        // --- Browser History ---
+        async function loadHistory() {
+            const container = document.getElementById('history-results');
+            container.innerHTML = '<p class="loading">Analyzing...</p>';
+            try {
+                const res = await authFetch('/api/history');
+                const data = await res.json();
+                if (data.error) {
+                    container.innerHTML = `<p class="error">${data.error}</p>`;
+                    return;
+                }
+                const topSites = data.top_sites || data.history || [];
+                if (topSites.length === 0) {
+                    container.innerHTML = '<p>No browsing history found for the past 7 days.</p>';
+                    return;
+                }
+                let html = '<table><thead><tr><th>Domain</th><th>Visits</th><th>Time Spent</th><th>Bar</th></tr></thead><tbody>';
+                const maxVisits = topSites[0].visits;
+                topSites.forEach(item => {
+                    const pct = Math.round((item.visits / maxVisits) * 100);
+                    html += `<tr>
+                <td>${item.domain}</td>
+                <td>${item.visits}</td>
+                <td>${item.total_time ? formatDuration(item.total_time) : 'N/A'}</td>
+                <td><div class="bar" style="width:${pct}%"></div></td>
+            </tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+                showToast('✅ History analyzed & stored in encrypted DB');
+            } catch (e) {
+                container.innerHTML = `<p class="error">Failed to analyze history: ${e.message}</p>`;
+            }
+        }
+
+        // --- Screenshots ---
+        async function captureScreenshot() {
+            showToast('📸 Capturing...');
+            const res = await authFetch('/api/screenshots/capture', { method: 'POST' });
+            const data = await res.json();
+            if (data.error) {
+                showToast('❌ ' + data.error);
+            } else {
+                showToast('✅ Screenshot saved');
+                loadScreenshots();
+                refreshStatus();
+            }
+        }
+
+        async function loadScreenshots() {
+            const res = await authFetch('/api/screenshots');
+            const data = await res.json();
+            const gallery = document.getElementById('screenshot-gallery');
+            if (!data.screenshots || data.screenshots.length === 0) {
+                gallery.innerHTML = '<p>No screenshots captured yet.</p>';
+                return;
+            }
+            gallery.innerHTML = data.screenshots.map(f =>
+                `<div class="ss-card">
+            <img src="/api/screenshots/${f}" alt="${f}" loading="lazy" />
+            <span>${f.replace('screenshot_', '').replace('.png', '')}</span>
+        </div>`
+            ).join('');
+        }
+
+        // --- Report ---
+        async function generateReport() {
+            const container = document.getElementById('report-content');
+            container.innerHTML = '<p class="loading">Generating report...</p>';
+            try {
+                const [statusRes, sitesRes, appsRes, keylogRes, ssRes, alertsRes, metricsRes] = await Promise.all([
+                    authFetch('/api/status'),
+                    authFetch('/api/blocked-sites'),
+                    authFetch('/api/app-blocker/apps'),
+                    authFetch('/api/keylogger/logs'),
+                    authFetch('/api/screenshots'),
+                    authFetch('/api/alerts?limit=10'),
+                    authFetch('/api/metrics?days=7')
+                ]);
+                const [status, sites, apps, keylog, ss, alerts, metrics] = await Promise.all([
+                    statusRes.json(), sitesRes.json(), appsRes.json(), keylogRes.json(),
+                    ssRes.json(), alertsRes.json(), metricsRes.json()
+                ]);
+
+                const now = new Date().toLocaleString();
+                const recentAlerts = (alerts.alerts || []).slice(0, 5).map(a =>
+                    `<div class="alert-item alert-${a.severity}" style="margin:4px 0; padding:8px;">
+                ${severityBadge(a.severity)} ${a.message} <small>(${timeAgo(a.timestamp)})</small>
+            </div>`
+                ).join('') || '<p>No recent alerts</p>';
+
+                container.innerHTML = `
+            <div class="report-block">
+                <h4>📅 Report Generated: ${now}</h4>
+                <hr>
+                <p><strong>🔒 Database:</strong> AES-256 Encrypted</p>
+                <p><strong>🌐 Blocked Sites (${status.blocked_sites_count}):</strong> ${sites.sites.join(', ') || 'None'}</p>
+                <p><strong>⌨️ Keylogger:</strong> ${status.keylogger_active ? 'Active' : 'Inactive'} (${status.keylog_size} bytes logged)</p>
+                <p><strong>🚫 App Blocker:</strong> ${status.app_blocker_active ? 'Active' : 'Inactive'} — Blocking: ${apps.apps.join(', ') || 'None'}</p>
+                <p><strong>📸 Screenshots:</strong> ${status.screenshot_count}</p>
+                <p><strong>🔔 Unread Alerts:</strong> ${status.unread_alerts}</p>
+                <p><strong>⏱ Screen Time (7d):</strong> ${formatDuration(metrics.total_screen_time)}</p>
+                <hr>
+                <h4>🔔 Recent Alerts</h4>
+                ${recentAlerts}
+                <hr>
+                <h4>⌨️ Keylog Content</h4>
+                <pre class="log-output">${keylog.logs || '(empty)'}</pre>
+            </div>
+        `;
+            } catch (e) {
+                container.innerHTML = `<p class="error">Report generation failed: ${e.message}</p>`;
+            }
+        }
+
+        // --- Toast Notifications ---
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // --- Auto-refresh alerts every 15 seconds ---
+        let alertRefreshInterval = null;
+        function startAlertAutoRefresh() {
+            if (alertRefreshInterval) return;
+            alertRefreshInterval = setInterval(() => {
+                refreshStatus();
+                const alertTab = document.getElementById('tab-alerts');
+                if (alertTab && alertTab.classList.contains('active')) {
+                    loadAlerts();
+                }
+            }, 15000);
+        }
+
+        // --- Enter key support on inputs ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const siteInput = document.getElementById('site-input');
+            if (siteInput) siteInput.addEventListener('keypress', e => { if (e.key === 'Enter') addSite(); });
+            const appInput = document.getElementById('app-input');
+            if (appInput) appInput.addEventListener('keypress', e => { if (e.key === 'Enter') addApp(); });
+            const kwInput = document.getElementById('keyword-input');
+            if (kwInput) kwInput.addEventListener('keypress', e => { if (e.key === 'Enter') addKeyword(); });
+
+            startAlertAutoRefresh();
+            checkAuth();
+        });
+    </script>
+
+</body>
+
+</html>
