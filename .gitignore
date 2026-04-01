@@ -39,3 +39,45 @@ Thumbs.db
 # Archives / non-source
 *.7z
 *.pptx
+
+# Environments
+.env
+.env.*
+!.env.example
+
+# User specific config files
+blocked_apps.json
+blocked_sites.json
+focus_time.json
+
+# Databases & Logs
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+Desktop.ini
+.AppleDouble
+.LSOverride
+
+# Python Testing Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Additional Build directories
+out/
+release/
+build/
+*.spec
+coverage/
+
+# Temporary IDE/Editor files
+*.swp
+*.swo
+*~
