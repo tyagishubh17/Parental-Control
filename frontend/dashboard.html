@@ -186,17 +186,27 @@
             <div class="tab-content" id="tab-apps">
                 <div class="panel">
                     <h3>App Blocker (Focus Mode)</h3>
+                    
+                    <h4 style="margin-top:1rem; color:var(--primary);">Focus Time Window</h4>
+                    <p class="hint">App Blocker will only terminate apps during this time window.</p>
+                    <div class="input-row" style="margin-bottom: 1.5rem;">
+                        <input type="time" id="focus-start" />
+                        <span style="color:white; margin: 0 10px;">to</span>
+                        <input type="time" id="focus-end" />
+                        <button class="btn btn-primary btn-sm" onclick="saveFocusTime()">💾 Save Time</button>
+                    </div>
+
+                    <h4 style="margin-top:1.5rem; color:var(--primary);">Blocked Applications</h4>
                     <div class="input-row">
                         <input type="text" id="app-input" placeholder="e.g. discord" />
                         <button class="btn btn-primary btn-sm" onclick="addApp()">+ Add</button>
                     </div>
                     <ul class="item-list" id="app-list"></ul>
-                    <div class="action-row">
+                    <div class="action-row" style="margin-top: 1.5rem;">
                         <button class="btn btn-primary btn-sm" id="blocker-toggle" onclick="toggleAppBlocker()">▶ Start
                             Blocker</button>
                     </div>
-                    <p class="hint">Blocker will terminate matching processes every 15 seconds. Violations generate
-                        alerts.</p>
+                    <p class="hint">When active, blocker automatically protects your focus time.</p>
                 </div>
             </div>
 
@@ -282,10 +292,14 @@
             <!-- TAB CONTENT: SCREENSHOTS -->
             <div class="tab-content" id="tab-screenshots">
                 <div class="panel">
-                    <h3>Screenshot Capture</h3>
-                    <button class="btn btn-primary btn-sm" onclick="captureScreenshot()">📸 Take Screenshot</button>
-                    <button class="btn btn-outline btn-sm" onclick="loadScreenshots()">🔄 Refresh</button>
-                    <div id="screenshot-gallery" class="screenshot-grid"></div>
+                    <h3>Continuous Screenshot Capture</h3>
+                    <div class="input-row" style="margin-bottom: 10px;">
+                        <input type="number" id="screenshot-minutes" placeholder="Duration (minutes)..." min="0.1" step="0.1" />
+                        <button class="btn btn-primary btn-sm" onclick="captureScreenshot()">▶️ Start Capture</button>
+                        <button class="btn btn-outline btn-sm" onclick="loadScreenshots()">🔄 Refresh</button>
+                    </div>
+                    <p class="hint">Captures a screenshot every 5 seconds invisibly for the given duration.</p>
+                    <div id="screenshot-gallery" class="screenshot-grid" style="margin-top: 20px;"></div>
                 </div>
             </div>
 
@@ -438,6 +452,7 @@
                 refreshStatus();
                 loadSites();
                 loadApps();
+                if(typeof loadFocusTime === 'function') loadFocusTime();
             }
             if (name === 'reports') generateReport();
         }
@@ -453,6 +468,7 @@
             if (tabName === 'alerts') loadAlerts();
             if (tabName === 'metrics') loadMetrics();
             if (tabName === 'keylogger') { loadKeywords(); loadRiskDetections(); }
+            if (tabName === 'apps') { loadApps(); if(typeof loadFocusTime === 'function') loadFocusTime(); }
         }
 
         // --- Status Refresh ---
@@ -636,6 +652,35 @@
         }
 
         // --- App Blocker ---
+        async function loadFocusTime() {
+            try {
+                const res = await authFetch('/api/focus-time');
+                const data = await res.json();
+                document.getElementById('focus-start').value = data.start_time || '21:00';
+                document.getElementById('focus-end').value = data.end_time || '23:00';
+            } catch (e) {
+                console.error("Failed to load focus time", e);
+            }
+        }
+        
+        async function saveFocusTime() {
+            const start = document.getElementById('focus-start').value;
+            const end = document.getElementById('focus-end').value;
+            if (!start || !end) return showToast('❌ Select valid times');
+            
+            try {
+                await authFetch('/api/focus-time', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ start_time: start, end_time: end })
+                });
+                showToast('✅ Focus time updated');
+                refreshStatus();
+            } catch (e) {
+                showToast('❌ Failed to save focus time');
+            }
+        }
+
         async function loadApps() {
             const res = await authFetch('/api/app-blocker/apps');
             const data = await res.json();
@@ -842,15 +887,23 @@
 
         // --- Screenshots ---
         async function captureScreenshot() {
-            showToast('📸 Capturing...');
-            const res = await authFetch('/api/screenshots/capture', { method: 'POST' });
+            const minInput = document.getElementById('screenshot-minutes').value;
+            const minutes = parseFloat(minInput);
+            if (!minutes || minutes <= 0) {
+                 return showToast('❌ Enter a valid duration in minutes');
+            }
+            showToast('📸 Starting Continuous Capture...');
+            const res = await authFetch('/api/screenshots/capture', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: minutes })
+            });
             const data = await res.json();
             if (data.error) {
                 showToast('❌ ' + data.error);
             } else {
-                showToast('✅ Screenshot saved');
-                loadScreenshots();
-                refreshStatus();
+                showToast('✅ ' + data.message);
+                document.getElementById('screenshot-minutes').value = '';
             }
         }
 

@@ -44,8 +44,8 @@ BLOCKED_APPS_FILE = os.path.join(BASE_DIR, "blocked_apps.json")
 DEFAULT_BLOCKED_APPS = ["brave", "firefox", "mspaint"]
 
 # -- Focus time settings --
-FOCUS_START_HOUR = 21  # 9 PM
-FOCUS_END_HOUR = 23    # 11 PM
+FOCUS_TIME_FILE = os.path.join(BASE_DIR, "focus_time.json")
+DEFAULT_FOCUS_TIME = {"start_time": "21:00", "end_time": "23:00"}
 
 # -- Hosts file --
 def get_hosts_path():
@@ -157,6 +157,19 @@ def save_blocked_apps(apps):
     with open(BLOCKED_APPS_FILE, 'w') as f:
         json.dump(apps, f)
 
+def load_focus_time():
+    if not os.path.exists(FOCUS_TIME_FILE):
+        return DEFAULT_FOCUS_TIME.copy()
+    try:
+        with open(FOCUS_TIME_FILE, 'r') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, PermissionError):
+        return DEFAULT_FOCUS_TIME.copy()
+
+def save_focus_time(settings):
+    with open(FOCUS_TIME_FILE, 'w') as f:
+        json.dump(settings, f)
+
 def get_keylog_content():
     if not os.path.exists(LOG_FILE):
         return ""
@@ -179,8 +192,18 @@ def get_chrome_history_path():
     return None
 
 def is_focus_time():
-    current_hour = datetime.now().hour
-    return FOCUS_START_HOUR <= current_hour < FOCUS_END_HOUR
+    ft = load_focus_time()
+    try:
+        start_t = datetime.strptime(ft.get("start_time", "21:00"), "%H:%M").time()
+        end_t = datetime.strptime(ft.get("end_time", "23:00"), "%H:%M").time()
+        now_t = datetime.now().time()
+        
+        if start_t <= end_t:
+            return start_t <= now_t <= end_t
+        else:
+            return start_t <= now_t or now_t <= end_t
+    except Exception:
+        return False
 
 
 # ==============================================================================
@@ -197,19 +220,21 @@ def apply_blocks_to_hosts(sites):
             if variant not in expanded:
                 expanded.append(variant)
     try:
-        with open(HOSTS_PATH, 'r+') as f:
+        with open(HOSTS_PATH, 'r') as f:
             content = f.read()
+
+        lines = content.splitlines()
+        existing_sites = set()
+        for line in lines:
+            parts = line.split()
+            if len(parts) >= 2 and not line.strip().startswith('#'):
+                existing_sites.add(parts[1])
+
+        added = 0
+        with open(HOSTS_PATH, 'a') as f:
             if content and not content.endswith('\n'):
                 f.write('\n')
             
-            lines = content.splitlines()
-            existing_sites = set()
-            for line in lines:
-                parts = line.split()
-                if len(parts) >= 2 and not line.strip().startswith('#'):
-                    existing_sites.add(parts[1])
-
-            added = 0
             for site in expanded:
                 if site not in existing_sites:
                     f.write(f"{REDIRECT_IP} {site}\n")
@@ -228,9 +253,10 @@ def apply_blocks_to_hosts(sites):
 
 def remove_blocks_from_hosts(sites):
     try:
-        with open(HOSTS_PATH, 'r+') as f:
+        with open(HOSTS_PATH, 'r') as f:
             lines = f.readlines()
-            f.seek(0)
+            
+        with open(HOSTS_PATH, 'w') as f:
             for line in lines:
                 is_blocked = False
                 parts = line.split()
@@ -242,7 +268,6 @@ def remove_blocks_from_hosts(sites):
                             break
                 if not is_blocked:
                     f.write(line)
-            f.truncate()
             
         # Flush DNS cache (Windows only)
         if sys.platform == "win32":
@@ -353,10 +378,21 @@ def monitor_blocked_sites_in_history():
 # ==============================================================================
 
 def get_running_processes():
-    """Get list of running process names (Linux)."""
+    """Get list of running process names."""
     try:
-        result = subprocess.run(['ps', '-eo', 'comm'], capture_output=True, text=True, timeout=5)
-        return [line.strip().lower() for line in result.stdout.strip().split('\n')[1:] if line.strip()]
+        if sys.platform == "win32":
+            result = subprocess.run(['tasklist', '/FO', 'CSV', '/NH'], capture_output=True, text=True, timeout=5)
+            processes = []
+            for line in result.stdout.strip().splitlines():
+                if line:
+                    parts = line.split('",')
+                    if parts:
+                        proc_name = parts[0].strip('"').lower()
+                        processes.append(proc_name)
+            return processes
+        else:
+            result = subprocess.run(['ps', '-eo', 'comm'], capture_output=True, text=True, timeout=5)
+            return [line.strip().lower() for line in result.stdout.strip().split('\n')[1:] if line.strip()]
     except Exception:
         return []
 
@@ -366,25 +402,45 @@ def terminate_blocked_apps():
     violated = []
     for app_name in apps:
         name = app_name.replace(".exe", "").lower()
+        
+        # Record violation if it is actively running
         if any(name in proc for proc in running):
             violated.append(app_name)
-            if sys.platform == "win32":
+            
+        # Unconditionally terminate to guarantee blocking
+        if sys.platform == "win32":
+            exe_name = f"{name}.exe"
+            os.system(f"taskkill /F /IM {exe_name} > NUL 2>&1")
+            # Also try the original name just in case
+            if app_name.lower() != exe_name:
                 os.system(f"taskkill /F /IM {app_name} > NUL 2>&1")
-            else:
-                os.system(f"pkill -f {name} > /dev/null 2>&1")
+        else:
+            os.system(f"pkill -f {name} > /dev/null 2>&1")
+            
     return violated
 
 def app_blocker_loop():
     global blocker_active
+    last_status = None
     while blocker_active:
-        violated = terminate_blocked_apps()
-        for app_name in violated:
-            db.add_alert(
-                "focus_violation",
-                "high",
-                f"Blocked app '{app_name}' was detected and terminated"
-            )
-        _time.sleep(15)
+        if is_focus_time():
+            if last_status != "active":
+                print("\n[App Blocker] Focus period is ACTIVE. Blocking applications...")
+                last_status = "active"
+                
+            violated = terminate_blocked_apps()
+            for app_name in violated:
+                db.add_alert(
+                    "focus_violation",
+                    "high",
+                    f"Blocked app '{app_name}' was terminated during focus time"
+                )
+        else:
+            if last_status != "inactive":
+                print("\n[App Blocker] Focus period is INACTIVE. Applications are allowed.")
+                last_status = "inactive"
+                
+        _time.sleep(5)
 
 
 # ==============================================================================
@@ -568,13 +624,14 @@ def alert_checker_loop():
         if is_focus_time():
             running = get_running_processes()
             blocked_apps = load_blocked_apps()
+            ft = load_focus_time()
             for app_name in blocked_apps:
                 name = app_name.replace(".exe", "").lower()
                 if any(name in proc for proc in running):
                     db.add_alert(
                         "focus_violation",
                         "high",
-                        f"App '{app_name}' detected running during focus time ({FOCUS_START_HOUR}:00-{FOCUS_END_HOUR}:00)"
+                        f"App '{app_name}' detected running during focus time ({ft.get('start_time')}-{ft.get('end_time')})"
                     )
 
         # Monitor Chrome history for blocked site visits
@@ -831,6 +888,7 @@ def auth_check():
 @require_auth
 def get_status():
     sites = load_blocked_sites()
+    ft = load_focus_time()
     return jsonify({
         "blocked_sites_count": len(sites),
         "keylogger_active": keylogger_active,
@@ -841,7 +899,7 @@ def get_status():
         "keylog_size": os.path.getsize(LOG_FILE) if os.path.exists(LOG_FILE) else 0,
         "unread_alerts": db.get_unread_alert_count(),
         "focus_time_active": is_focus_time(),
-        "focus_hours": f"{FOCUS_START_HOUR}:00 - {FOCUS_END_HOUR}:00",
+        "focus_hours": f"{ft.get('start_time')} - {ft.get('end_time')}",
     })
 
 
@@ -1077,6 +1135,26 @@ def remove_blocked_app():
     return jsonify({"message": f"Removed {app_name}", "apps": apps})
 
 
+# --- Focus Time ---
+@app.route('/api/focus-time', methods=['GET'])
+@require_auth
+def get_focus_time():
+    return jsonify(load_focus_time())
+
+@app.route('/api/focus-time', methods=['POST'])
+@require_auth
+def update_focus_time():
+    data = request.get_json()
+    start_time = data.get('start_time', '21:00')
+    end_time = data.get('end_time', '23:00')
+    settings = {"start_time": start_time, "end_time": end_time}
+    save_focus_time(settings)
+    
+    # Reload the status badge manually or the frontend will fetch it
+    db.add_alert("system", "low", f"Focus time updated to {start_time}-{end_time}")
+    return jsonify({"message": "Focus time settings saved", "settings": settings})
+
+
 # --- Alerts ---
 @app.route('/api/alerts')
 @require_auth
@@ -1229,14 +1307,26 @@ def get_metrics():
 def get_screenshots():
     return jsonify({"screenshots": list_screenshots()})
 
+def continuous_screenshot_loop(duration_minutes):
+    iterations = int(duration_minutes * 60 / 5)
+    for _ in range(iterations):
+        take_screenshot()
+        _time.sleep(5)
+
 @app.route('/api/screenshots/capture', methods=['POST'])
 @require_auth
 def capture_screenshot():
-    filename, error = take_screenshot()
-    if error:
-        return jsonify({"error": error}), 500
-    db.add_alert("system", "low", f"Screenshot captured: {filename}")
-    return jsonify({"message": "Screenshot captured", "filename": filename})
+    data = request.get_json() or {}
+    try:
+        minutes = float(data.get('minutes', 0))
+    except (ValueError, TypeError):
+        minutes = 0
+        
+    if minutes <= 0:
+        return jsonify({"error": "Duration must be greater than 0"}), 400
+        
+    threading.Thread(target=continuous_screenshot_loop, args=(minutes,), daemon=True).start()
+    return jsonify({"message": f"Started continuous capture for {minutes} minute(s)"})
 
 @app.route('/api/screenshots/<filename>')
 @require_auth

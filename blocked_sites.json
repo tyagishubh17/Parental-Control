@@ -2,5 +2,13 @@
   {
     "site": "youtube.com",
     "active": false
+  },
+  {
+    "site": "github.com",
+    "active": false
+  },
+  {
+    "site": "netflix.com",
+    "active": false
   }
 ]
